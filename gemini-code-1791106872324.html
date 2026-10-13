@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SetClassify - Sistem Klasifikasi Data dengan Himpunan</title>
+  <meta name="description" content="Aplikasi klasifikasi data mahasiswa, visualisasi operasi himpunan matematika diskrit PJBL, dan manajemen partisipasi anggota kelompok." />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbar & visual tweaks */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .venn-circle {
+      transition: all 0.3s ease;
+      mix-blend-mode: multiply;
+    }
+    .venn-area {
+      transition: fill 0.3s ease, opacity 0.3s ease;
+      cursor: pointer;
+    }
+    .venn-area:hover {
+      fill-opacity: 0.65;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-fuchsia-500 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+          <span class="material-symbols-outlined text-2xl">blur_on</span>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg text-slate-900 tracking-tight leading-none">SetClassify</h1>
+          <p class="text-xs text-slate-500 mt-0.5">Analisis Himpunan & Visualisasi Diskret</p>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex space-x-1 bg-slate-100 p-1 rounded-xl text-sm font-medium">
+        <button onclick="switchTab('data')" id="tab-btn-data" class="tab-btn px-4 py-2 rounded-lg transition-all text-indigo-700 bg-white shadow-sm font-semibold">
+          <span class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">database</span>
+            Semesta (U) & Data
+          </span>
+        </button>
+        <button onclick="switchTab('sets')" id="tab-btn-sets" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 hover:text-slate-900">
+          <span class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">filter_alt</span>
+            Definisi Himpunan
+          </span>
+        </button>
+        <button onclick="switchTab('ops')" id="tab-btn-ops" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 hover:text-slate-900">
+          <span class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">calculate</span>
+            Kalkulator & Venn
+          </span>
+        </button>
+        <button onclick="switchTab('proofs')" id="tab-btn-proofs" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 hover:text-slate-900">
+          <span class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">functions</span>
+            Hukum & Teori
+          </span>
+        </button>
+        <button onclick="switchTab('team')" id="tab-btn-team" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 hover:text-slate-900">
+          <span class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">groups</span>
+            Anggota Kelompok
+          </span>
+        </button>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <button onclick="exportDataCSV()" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition">
+          <span class="material-symbols-outlined text-base">download</span>
+          <span>Ekspor CSV</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Mobile Tabs Navigation -->
+    <div class="md:hidden flex border-t border-slate-200 overflow-x-auto bg-slate-50 p-1 gap-1 text-xs">
+      <button onclick="switchTab('data')" id="m-tab-data" class="px-3 py-2 rounded-lg font-medium whitespace-nowrap bg-indigo-600 text-white">Semesta (U)</button>
+      <button onclick="switchTab('sets')" id="m-tab-sets" class="px-3 py-2 rounded-lg font-medium whitespace-nowrap text-slate-600">Himpunan</button>
+      <button onclick="switchTab('ops')" id="m-tab-ops" class="px-3 py-2 rounded-lg font-medium whitespace-nowrap text-slate-600">Kalkulator & Venn</button>
+      <button onclick="switchTab('proofs')" id="m-tab-proofs" class="px-3 py-2 rounded-lg font-medium whitespace-nowrap text-slate-600">Teorema</button>
+      <button onclick="switchTab('team')" id="m-tab-team" class="px-3 py-2 rounded-lg font-medium whitespace-nowrap text-slate-600">Kelompok</button>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3">
+      <span class="material-symbols-outlined text-emerald-400" id="toast-icon">check_circle</span>
+      <span id="toast-msg" class="text-sm font-medium">Notifikasi</span>
+    </div>
+
+    <!-- SUMMARY METRICS BAR -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-slate-100 rounded-xl text-slate-700">
+          <span class="material-symbols-outlined text-xl">groups</span>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Semesta |U|</p>
+          <p class="text-2xl font-extrabold text-slate-800" id="stat-u">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+          <span class="material-symbols-outlined text-xl">category</span>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Himpunan |A|</p>
+          <p class="text-2xl font-extrabold text-indigo-600" id="stat-a">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-fuchsia-50 rounded-xl text-fuchsia-600">
+          <span class="material-symbols-outlined text-xl">school</span>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Himpunan |B|</p>
+          <p class="text-2xl font-extrabold text-fuchsia-600" id="stat-b">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-amber-50 rounded-xl text-amber-600">
+          <span class="material-symbols-outlined text-xl">workspace_premium</span>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Himpunan |C|</p>
+          <p class="text-2xl font-extrabold text-amber-600" id="stat-c">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: DATA MAHASISWA -->
+    <section id="sec-data" class="tab-content space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <span class="material-symbols-outlined text-indigo-600">view_list</span>
+              Data Mahasiswa Semesta (U)
+            </h2>
+            <p class="text-xs text-slate-500">Kelola populasi data dasar yang digunakan sebagai himpunan semesta universal.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="loadPresetData()" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">restore</span>
+              Muat Data Preset (Contoh)
+            </button>
+            <button onclick="toggleAddModal(true)" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-200 transition flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">add</span>
+              Tambah Mahasiswa
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+          <div class="relative w-full sm:w-80">
+            <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+            <input type="text" id="search-input" oninput="renderTable()" placeholder="Cari Nama, NIM, atau Jurusan..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div class="text-xs text-slate-500 self-end sm:self-center">
+            Total Record: <span id="record-count" class="font-bold text-slate-800">0</span>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="p-3">NIM</th>
+                <th class="p-3">Nama Lengkap</th>
+                <th class="p-3">Jurusan</th>
+                <th class="p-3 text-center">IPK</th>
+                <th class="p-3 text-center">Beasiswa</th>
+                <th class="p-3 text-center">Organisasi</th>
+                <th class="p-3 text-center">Lulus Tepat Waktu</th>
+                <th class="p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="student-table-body" class="divide-y divide-slate-100">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
+          <div id="pagination-info">Menampilkan 1-10 dari 0</div>
+          <div class="flex items-center gap-2">
+            <button id="btn-prev-page" onclick="changePage(-1)" class="p-1.5 rounded-lg border border-slate-300 disabled:opacity-40">
+              <span class="material-symbols-outlined text-base">chevron_left</span>
+            </button>
+            <span id="page-num" class="font-semibold">1</span>
+            <button id="btn-next-page" onclick="changePage(1)" class="p-1.5 rounded-lg border border-slate-300 disabled:opacity-40">
+              <span class="material-symbols-outlined text-base">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: DEFINISI HIMPUNAN -->
+    <section id="sec-sets" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Himpunan A -->
+        <div class="bg-white rounded-2xl border border-indigo-200 shadow-sm p-5 space-y-4 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1.5 bg-indigo-500"></div>
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-indigo-500"></span> Himpunan A
+            </h3>
+            <span id="cardinality-a" class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-extrabold">|A| = 0</span>
+          </div>
+
+          <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl text-xs">
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Syarat IPK Minimal:</label>
+              <input type="number" id="filter-a-gpa" step="0.1" min="0" max="4" value="3.50" onchange="updateSetDefinitions()" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Persyaratan Tambahan:</label>
+              <select id="filter-a-extra" onchange="updateSetDefinitions()" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+                <option value="none">Tidak ada (Hanya IPK)</option>
+                <option value="scholarship">Harus Penerima Beasiswa</option>
+                <option value="org">Harus Aktif Organisasi</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <span class="text-xs font-semibold text-slate-500 block mb-2">Anggota Himpunan A:</span>
+            <div id="list-set-a" class="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+              <!-- Items rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Himpunan B -->
+        <div class="bg-white rounded-2xl border border-fuchsia-200 shadow-sm p-5 space-y-4 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1.5 bg-fuchsia-500"></div>
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-fuchsia-500"></span> Himpunan B
+            </h3>
+            <span id="cardinality-b" class="bg-fuchsia-50 text-fuchsia-700 px-2.5 py-1 rounded-full text-xs font-extrabold">|B| = 0</span>
+          </div>
+
+          <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl text-xs">
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Kategori Utama:</label>
+              <select id="filter-b-type" onchange="updateSetDefinitions()" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+                <option value="scholarship">Penerima Beasiswa</option>
+                <option value="org">Aktif Organisasi</option>
+                <option value="ontime">Lulus Tepat Waktu</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Batas IPK Minimal:</label>
+              <input type="number" id="filter-b-gpa" step="0.1" min="0" max="4" value="3.00" onchange="updateSetDefinitions()" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-fuchsia-500">
+            </div>
+          </div>
+
+          <div>
+            <span class="text-xs font-semibold text-slate-500 block mb-2">Anggota Himpunan B:</span>
+            <div id="list-set-b" class="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+              <!-- Items rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Himpunan C -->
+        <div class="bg-white rounded-2xl border border-amber-200 shadow-sm p-5 space-y-4 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1.5 bg-amber-500"></div>
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-amber-500"></span> Himpunan C
+            </h3>
+            <span id="cardinality-c" class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-xs font-extrabold">|C| = 0</span>
+          </div>
+
+          <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl text-xs">
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Kategori Utama:</label>
+              <select id="filter-c-type" onchange="updateSetDefinitions()" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+                <option value="org">Aktif Organisasi</option>
+                <option value="scholarship">Penerima Beasiswa</option>
+                <option value="ontime">Lulus Tepat Waktu</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">Filter Jurusan Spesifik:</label>
+              <select id="filter-c-dept" onchange="updateSetDefinitions()" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+                <option value="all">Semua Jurusan</option>
+                <option value="Teknik Informatika">Teknik Informatika</option>
+                <option value="Sistem Informasi">Sistem Informasi</option>
+                <option value="Data Science">Data Science</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <span class="text-xs font-semibold text-slate-500 block mb-2">Anggota Himpunan C:</span>
+            <div id="list-set-c" class="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+              <!-- Items rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 3: KALKULATOR & VENN -->
+    <section id="sec-ops" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Controls & Custom Expression Calculator -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+            <h2 class="font-bold text-slate-900 text-base flex items-center gap-2">
+              <span class="material-symbols-outlined text-indigo-600">calculate</span>
+              Operasi Himpunan Standar
+            </h2>
+
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="selectOperation('A_INTERSECT_B')" class="op-btn text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 flex items-center justify-between transition">
+                <span>Irisan (A ∩ B)</span>
+                <span class="font-mono text-indigo-600">∩</span>
+              </button>
+
+              <button onclick="selectOperation('A_UNION_B')" class="op-btn text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 flex items-center justify-between transition">
+                <span>Gabungan (A ∪ B)</span>
+                <span class="font-mono text-indigo-600">∪</span>
+              </button>
+
+              <button onclick="selectOperation('A_DIFF_B')" class="op-btn text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 flex items-center justify-between transition">
+                <span>Selisih (A \ B)</span>
+                <span class="font-mono text-indigo-600 font-bold">\</span>
+              </button>
+
+              <button onclick="selectOperation('B_DIFF_A')" class="op-btn text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 flex items-center justify-between transition">
+                <span>Selisih (B \ A)</span>
+                <span class="font-mono text-indigo-600 font-bold">\</span>
+              </button>
+
+              <button onclick="selectOperation('A_SYM_DIFF_B')" class="op-btn text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 flex items-center justify-between transition">
+                <span>Beda Setara (A ⊕ B)</span>
+                <span class="font-mono text-indigo-600">⊕</span>
+              </button>
+
+              <button onclick="selectOperation('A_COMPLEMENT')" class="op-btn text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 flex items-center justify-between transition">
+                <span>Komplemen (A')</span>
+                <span class="font-mono text-indigo-600">A'</span>
+              </button>
+            </div>
+
+            <!-- Custom Expression Builder -->
+            <div class="pt-4 border-t border-slate-100 space-y-3">
+              <label class="text-xs font-bold text-slate-800 block">Ekspresi Kombinasi Kustom:</label>
+              <div class="flex gap-2">
+                <input type="text" id="custom-exp-input" placeholder="contoh: (A n B) \ C" value="(A ∩ B) \ C" class="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <button onclick="evaluateCustomExpr()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition">
+                  Evaluasi
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-400">Gunakan simbol: <code class="bg-slate-100 px-1 py-0.5 rounded">∩ / n</code> (Irisan), <code class="bg-slate-100 px-1 py-0.5 rounded">∪ / u</code> (Gabungan), <code class="bg-slate-100 px-1 py-0.5 rounded">\</code> (Selisih), <code class="bg-slate-100 px-1 py-0.5 rounded">'</code> (Komplemen).</p>
+            </div>
+          </div>
+
+          <!-- Result Details Panel -->
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-slate-900 text-sm">Hasil Operasi</h3>
+              <span id="res-cardinality" class="bg-indigo-100 text-indigo-800 text-xs font-extrabold px-2.5 py-1 rounded-full">Kardinalitas: 0</span>
+            </div>
+            <p id="res-description" class="text-xs text-slate-500 italic">Pilih operasi di atas untuk melihat anggota himpunan hasil.</p>
+
+            <div id="res-list" class="max-h-52 overflow-y-auto space-y-2 pt-2 border-t border-slate-100">
+              <!-- Item list -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive SVG Venn Diagram -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600">pie_chart</span>
+                Visualisasi Diagram Venn (3 Himpunan)
+              </h2>
+              <span id="active-op-label" class="text-xs font-extrabold uppercase tracking-wide text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Irisan (A ∩ B)</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">Area ber-highlight menyesuaikan dengan hasil operasi himpunan yang aktif.</p>
+          </div>
+
+          <!-- SVG Canvas -->
+          <div class="w-full flex justify-center items-center py-4 relative">
+            <svg viewBox="0 0 500 420" class="w-full max-w-lg h-auto drop-shadow-sm">
+              <!-- Universe Boundary (U) -->
+              <rect x="10" y="10" width="480" height="400" rx="20" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4 4" />
+              <text x="30" y="40" font-family="sans-serif" font-size="16" font-weight="bold" fill="#64748b">U (Semesta)</text>
+
+              <!-- SVG Venn Circles -->
+              <!-- Circle A -->
+              <circle cx="200" cy="200" r="90" fill="rgba(99, 102, 241, 0.15)" stroke="#6366f1" stroke-width="3" />
+              <text x="140" y="150" font-family="sans-serif" font-size="16" font-weight="extrabold" fill="#4f46e5">A</text>
+
+              <!-- Circle B -->
+              <circle cx="300" cy="200" r="90" fill="rgba(217, 70, 239, 0.15)" stroke="#d946ef" stroke-width="3" />
+              <text x="350" y="150" font-family="sans-serif" font-size="16" font-weight="extrabold" fill="#c026d3">B</text>
+
+              <!-- Circle C -->
+              <circle cx="250" cy="270" r="90" fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" stroke-width="3" />
+              <text x="250" y="380" font-family="sans-serif" font-size="16" font-weight="extrabold" fill="#d97706">C</text>
+
+              <!-- Intersection Labels -->
+              <text x="250" y="185" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155" id="venn-count-a-b">A∩B</text>
+              <text x="205" y="260" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155" id="venn-count-a-c">A∩C</text>
+              <text x="295" y="260" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155" id="venn-count-b-c">B∩C</text>
+              <text x="250" y="235" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b" id="venn-count-a-b-c">A∩B∩C</text>
+            </svg>
+          </div>
+
+          <div class="flex justify-center items-center gap-6 text-xs text-slate-600 pt-2 border-t border-slate-100">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> Himpunan A</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-fuchsia-500"></span> Himpunan B</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span> Himpunan C</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 4: HUKUM & TEOREMA -->
+    <section id="sec-proofs" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <span class="material-symbols-outlined text-indigo-600">functions</span>
+            Verifikasi Teorema & Hukum Himpunan
+          </h2>
+          <p class="text-xs text-slate-500">Pembuktian otomatis operasi matematika diskrit berbasis data riil dalam semesta U.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- Prinsip Inklusi Eksklusi -->
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-slate-900 text-sm">1. Prinsip Inklusi-Eksklusi</h3>
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Terbukti Valid</span>
+            </div>
+            <p class="text-xs text-slate-600">
+              Rumus Kardinalitas: <code class="bg-white px-2 py-1 rounded font-mono border text-indigo-700 font-bold">|A ∪ B| = |A| + |B| - |A ∩ B|</code>
+            </p>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs space-y-2 font-mono">
+              <div class="flex justify-between">
+                <span>|A|</span>
+                <span id="pie-card-a" class="font-bold text-indigo-600">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span>|B|</span>
+                <span id="pie-card-b" class="font-bold text-fuchsia-600">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span>|A ∩ B|</span>
+                <span id="pie-card-inter" class="font-bold text-amber-600">0</span>
+              </div>
+              <hr class="border-slate-100">
+              <div class="flex justify-between font-extrabold text-slate-800">
+                <span>Hasil Rumus (|A| + |B| - |A ∩ B|):</span>
+                <span id="pie-calc-res">0</span>
+              </div>
+              <div class="flex justify-between font-extrabold text-slate-800">
+                <span>Aktual |A ∪ B|:</span>
+                <span id="pie-actual-res">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hukum De Morgan -->
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-slate-900 text-sm">2. Hukum De Morgan</h3>
+              <span id="demorgan-status" class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Terbukti Sama</span>
+            </div>
+            <p class="text-xs text-slate-600">
+              Persamaan: <code class="bg-white px-2 py-1 rounded font-mono border text-indigo-700 font-bold">(A ∪ B)' = A' ∩ B'</code>
+            </p>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs space-y-2 font-mono">
+              <div class="flex justify-between">
+                <span>Kardinalitas (A ∪ B)':</span>
+                <span id="demorgan-left" class="font-bold text-slate-800">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Kardinalitas (A' ∩ B'):</span>
+                <span id="demorgan-right" class="font-bold text-slate-800">0</span>
+              </div>
+              <hr class="border-slate-100">
+              <p class="text-[11px] text-slate-500 font-sans italic" id="demorgan-note">
+                Kedua sisi menghasilkan himpunan elemen yang sama persis dalam Semesta U.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: ANGGOTA KELOMPOK & PARTISIPASI (FITUR 6 ANGGOTA KELOMPOK) -->
+    <section id="sec-team" class="tab-content hidden space-y-6">
+      
+      <!-- Header Banner Kelompok -->
+      <div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <div class="inline-flex items-center space-x-2 bg-indigo-700/50 px-3 py-1 rounded-full text-xs text-indigo-200 font-medium mb-3 border border-indigo-500/30">
+            <span class="material-symbols-outlined text-xs">groups</span>
+            <span>Project Based Learning (PJBL) • Matematika Diskrit</span>
+          </div>
+          <h2 class="font-extrabold text-2xl sm:text-3xl tracking-tight">Struktur Kelompok & Partisipasi</h2>
+          <p class="text-xs sm:text-sm text-indigo-200 mt-1">Daftar 6 anggota kelompok beserta penilaian kontribusi tugas secara transparan.</p>
+        </div>
+
+        <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 flex items-center space-x-4 min-w-[200px]">
+          <div class="p-3 bg-indigo-500/30 rounded-xl text-indigo-200">
+            <span class="material-symbols-outlined text-2xl">star</span>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase font-bold text-indigo-300 tracking-wider">Rata-Rata Partisipasi</p>
+            <p class="text-2xl font-bold font-mono text-white" id="team-avg-score">0.0 <span class="text-xs font-normal text-indigo-300">/ 100</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid 6 Anggota Kelompok -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="team-cards-container">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Summary / Matrix Partisipasi Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+        <h3 class="font-bold text-base text-slate-800 mb-1">Matriks Evaluasi Partisipasi Anggota</h3>
+        <p class="text-xs text-slate-500 mb-4">Ringkasan total 6 anggota kelompok yang berkontribusi dalam pengoperasian aplikasi ini.</p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
+                <th class="py-3 px-4">No</th>
+                <th class="py-3 px-4">NIM</th>
+                <th class="py-3 px-4">Nama Anggota</th>
+                <th class="py-3 px-4">Peran & Tanggung Jawab</th>
+                <th class="py-3 px-4 text-center">Skor Partisipasi</th>
+                <th class="py-3 px-4 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="team-table-body" class="divide-y divide-slate-100 text-xs text-slate-700">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Modal Tambah Mahasiswa -->
+  <div id="modal-add-student" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl transform scale-95 transition-transform duration-200" id="modal-content">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <h3 class="font-bold text-slate-900 text-base">Tambah Data Mahasiswa Baru</h3>
+        <button onclick="toggleAddModal(false)" class="text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form id="form-add-student" onsubmit="handleAddStudent(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700 block mb-1">NIM</label>
+          <input type="text" id="input-nim" required placeholder="contoh: 230101099" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700 block mb-1">Nama Lengkap</label>
+          <input type="text" id="input-name" required placeholder="contoh: Budi Santoso" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700 block mb-1">Jurusan</label>
+          <select id="input-dept" class="w-full px-3 py-2 border border-slate-300 rounded-xl">
+            <option value="Teknik Informatika">Teknik Informatika</option>
+            <option value="Sistem Informasi">Sistem Informasi</option>
+            <option value="Data Science">Data Science</option>
+            <option value="Teknik Komputer">Teknik Komputer</option>
+          </select>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700 block mb-1">IPK</label>
+          <input type="number" id="input-gpa" min="0" max="4" step="0.01" required value="3.50" class="w-full px-3 py-2 border border-slate-300 rounded-xl">
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="input-scholarship" class="rounded text-indigo-600 focus:ring-indigo-500">
+            <span class="text-slate-700 font-medium">Penerima Beasiswa</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="input-org" class="rounded text-indigo-600 focus:ring-indigo-500">
+            <span class="text-slate-700 font-medium">Aktif Organisasi / UKM</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="input-ontime" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+            <span class="text-slate-700 font-medium">Prediksi Lulus Tepat Waktu</span>
+          </label>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+          <button type="button" onclick="toggleAddModal(false)" class="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-600">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-md shadow-indigo-200">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. GLOBAL STATE & PRESET DATA
+       ========================================================================== */
+    const PRESET_STUDENTS = [
+      { nim: "230101001", name: "Ahmad Rizky", dept: "Teknik Informatika", gpa: 3.85, scholarship: true, org: true, onTime: true },
+      { nim: "230101002", name: "Siti Nurhaliza", dept: "Sistem Informasi", gpa: 3.65, scholarship: true, org: false, onTime: true },
+      { nim: "230101003", name: "Budi Pratama", dept: "Teknik Informatika", gpa: 3.20, scholarship: false, org: true, onTime: true },
+      { nim: "230101004", name: "Dewi Anggraini", dept: "Data Science", gpa: 3.92, scholarship: true, org: true, onTime: true },
+      { nim: "230101005", name: "Eko Prasetyo", dept: "Sistem Informasi", gpa: 2.95, scholarship: false, org: false, onTime: false },
+      { nim: "230101006", name: "Fanya Utami", dept: "Data Science", gpa: 3.75, scholarship: false, org: true, onTime: true },
+      { nim: "230101007", name: "Gilang Ramadhan", dept: "Teknik Komputer", gpa: 3.40, scholarship: false, org: true, onTime: true },
+      { nim: "230101008", name: "Hania Lestari", dept: "Teknik Informatika", gpa: 3.88, scholarship: true, org: false, onTime: true },
+      { nim: "230101009", name: "Indra Wijaya", dept: "Sistem Informasi", gpa: 3.10, scholarship: false, org: false, onTime: true },
+      { nim: "230101010", name: "Jasmine Putri", dept: "Data Science", gpa: 3.60, scholarship: true, org: true, onTime: true },
+      { nim: "230101011", name: "Kevin Sanjaya", dept: "Teknik Komputer", gpa: 2.80, scholarship: false, org: true, onTime: false },
+      { nim: "230101012", name: "Larasati Dewi", dept: "Teknik Informatika", gpa: 3.95, scholarship: true, org: true, onTime: true }
+    ];
+
+    // Data 6 Anggota Kelompok
+    let teamMembers = [
+      { id: 1, nim: '25210169', name: 'Ida Lestari', role: 'Ketua Kelompok & Lead Developer', task: 'Merancang arsitektur aplikasi dan algoritma logika himpunan.', score: 95 },
+      { id: 2, nim: '25210174', name: 'Resky Aulia Sawaly', role: 'Frontend & UI/UX Designer', task: 'Mendesain tata letak visual, Diagram Venn SVG, dan tema CSS.', score: 92 },
+      { id: 3, nim: '25210382', name: 'Era Rizkiani', role: 'Data Analyst & Researcher', task: 'Menyiapkan dataset mahasiswa dan perumusan operasi matematika diskrit.', score: 88 },
+      { id: 4, nim: '25210045', name: 'Azizi', role: 'QA & Software Tester', task: 'Menguji verifikasi Hukum De Morgan dan kalkulator ekspresi.', score: 85 },
+      { id: 5, nim: '25210043', name: 'Usnul Al-munawarah', role: 'Technical Writer', task: 'Menyusun dokumentasi Project Based Learning (PJBL) & laporan.', score: 87 },
+      { id: 6, nim: '25210096', name: 'Azzukruf Fikri', role: 'Presenter & Media', task: 'Membuat slide presentasi dan materi pengujian sistem.', score: 90 }
+    ];
+
+    let universeStudents = [...PRESET_STUDENTS];
+    let setA = [];
+    let setB = [];
+    let setC = [];
+
+    let currentPage = 1;
+    const itemsPerPage = 6;
+    let currentOperation = 'A_INTERSECT_B';
+
+    /* ==========================================================================
+       2. TAB NAVIGATION & INITIALIZATION
+       ========================================================================== */
+    window.onload = function() {
+      updateSetDefinitions();
+      renderTable();
+      renderTeamSection();
+    };
+
+    function switchTab(tabKey) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`sec-${tabKey}`).classList.remove('hidden');
+
+      // Update Header Tab styling
+      const tabs = ['data', 'sets', 'ops', 'proofs', 'team'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const mBtn = document.getElementById(`m-tab-${t}`);
+        if (t === tabKey) {
+          if (btn) btn.className = "tab-btn px-4 py-2 rounded-lg transition-all text-indigo-700 bg-white shadow-sm font-semibold";
+          if (mBtn) mBtn.className = "px-3 py-2 rounded-lg font-medium whitespace-nowrap bg-indigo-600 text-white";
+        } else {
+          if (btn) btn.className = "tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 hover:text-slate-900";
+          if (mBtn) mBtn.className = "px-3 py-2 rounded-lg font-medium whitespace-nowrap text-slate-600";
+        }
+      });
+
+      if (tabKey === 'ops' || tabKey === 'proofs') {
+        runCurrentOperation();
+        updateTheoryProofs();
+      } else if (tabKey === 'team') {
+        renderTeamSection();
+      }
+    }
+
+    function showToast(message, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = message;
+      toastIcon.innerText = isSuccess ? 'check_circle' : 'error';
+      toastIcon.className = `material-symbols-outlined ${isSuccess ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      toast.classList.remove('translate-y-10', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-10', 'opacity-0');
+      }, 3000);
+    }
+
+    /* ==========================================================================
+       3. DATA MANAGEMENT (SEMESTA U)
+       ========================================================================== */
+    function loadPresetData() {
+      universeStudents = [...PRESET_STUDENTS];
+      currentPage = 1;
+      updateSetDefinitions();
+      renderTable();
+      showToast('Data preset berhasil dimuat kembali!');
+    }
+
+    function renderTable() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const filtered = universeStudents.filter(s => 
+        s.name.toLowerCase().includes(search) || 
+        s.nim.toLowerCase().includes(search) ||
+        s.dept.toLowerCase().includes(search)
+      );
+
+      document.getElementById('record-count').innerText = filtered.length;
+
+      const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const startIdx = (currentPage - 1) * itemsPerPage;
+      const pageData = filtered.slice(startIdx, startIdx + itemsPerPage);
+
+      const tbody = document.getElementById('student-table-body');
+      tbody.innerHTML = '';
+
+      if (pageData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Tidak ada data mahasiswa ditemukan.</td></tr>`;
+      } else {
+        pageData.forEach(s => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-3 font-mono font-medium text-slate-900">${s.nim}</td>
+              <td class="p-3 font-semibold text-slate-800">${s.name}</td>
+              <td class="p-3">${s.dept}</td>
+              <td class="p-3 text-center font-bold text-indigo-600">${s.gpa.toFixed(2)}</td>
+              <td class="p-3 text-center">
+                ${s.scholarship ? '<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold text-[10px]">Ya</span>' : '<span class="text-slate-400">-</span>'}
+              </td>
+              <td class="p-3 text-center">
+                ${s.org ? '<span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold text-[10px]">Ya</span>' : '<span class="text-slate-400">-</span>'}
+              </td>
+              <td class="p-3 text-center">
+                ${s.onTime ? '<span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-semibold text-[10px]">Tepat</span>' : '<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold text-[10px]">Terlambat</span>'}
+              </td>
+              <td class="p-3 text-center">
+                <button onclick="deleteStudent('${s.nim}')" class="text-slate-400 hover:text-rose-600 transition" title="Hapus Mahasiswa">
+                  <span class="material-symbols-outlined text-base">delete</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      // Update Pagination UI
+      document.getElementById('pagination-info').innerText = `Menampilkan ${filtered.length ? startIdx + 1 : 0}-${Math.min(startIdx + itemsPerPage, filtered.length)} dari ${filtered.length}`;
+      document.getElementById('page-num').innerText = currentPage;
+      document.getElementById('btn-prev-page').disabled = currentPage === 1;
+      document.getElementById('btn-next-page').disabled = currentPage >= totalPages;
+
+      // Update Header Stats
+      document.getElementById('stat-u').innerText = universeStudents.length;
+    }
+
+    function changePage(delta) {
+      currentPage += delta;
+      renderTable();
+    }
+
+    function toggleAddModal(show) {
+      const modal = document.getElementById('modal-add-student');
+      if (show) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.remove('opacity-0');
+          document.getElementById('modal-content').classList.remove('scale-95');
+        }, 10);
+      } else {
+        modal.classList.add('opacity-0');
+        document.getElementById('modal-content').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+      }
+    }
+
+    function handleAddStudent(e) {
+      e.preventDefault();
+      const nim = document.getElementById('input-nim').value.trim();
+
+      if (universeStudents.some(s => s.nim === nim)) {
+        showToast('NIM sudah terdaftar dalam sistem!', false);
+        return;
+      }
+
+      const newStudent = {
+        nim: nim,
+        name: document.getElementById('input-name').value.trim(),
+        dept: document.getElementById('input-dept').value,
+        gpa: parseFloat(document.getElementById('input-gpa').value),
+        scholarship: document.getElementById('input-scholarship').checked,
+        org: document.getElementById('input-org').checked,
+        onTime: document.getElementById('input-ontime').checked
+      };
+
+      universeStudents.unshift(newStudent);
+      toggleAddModal(false);
+      document.getElementById('form-add-student').reset();
+      updateSetDefinitions();
+      renderTable();
+      showToast('Mahasiswa baru berhasil ditambahkan.');
+    }
+
+    function deleteStudent(nim) {
+      universeStudents = universeStudents.filter(s => s.nim !== nim);
+      updateSetDefinitions();
+      renderTable();
+      showToast('Mahasiswa dihapus dari Semesta.');
+    }
+
+    /* ==========================================================================
+       4. DEFINISI HIMPUNAN A, B, C
+       ========================================================================== */
+    function updateSetDefinitions() {
+      const minGpaA = parseFloat(document.getElementById('filter-a-gpa').value) || 0;
+      const extraA = document.getElementById('filter-a-extra').value;
+
+      setA = universeStudents.filter(s => {
+        let pass = s.gpa >= minGpaA;
+        if (extraA === 'scholarship') pass = pass && s.scholarship;
+        if (extraA === 'org') pass = pass && s.org;
+        return pass;
+      });
+
+      const typeB = document.getElementById('filter-b-type').value;
+      const minGpaB = parseFloat(document.getElementById('filter-b-gpa').value) || 0;
+
+      setB = universeStudents.filter(s => {
+        let pass = s.gpa >= minGpaB;
+        if (typeB === 'scholarship') pass = pass && s.scholarship;
+        if (typeB === 'org') pass = pass && s.org;
+        if (typeB === 'ontime') pass = pass && s.onTime;
+        return pass;
+      });
+
+      const typeC = document.getElementById('filter-c-type').value;
+      const deptC = document.getElementById('filter-c-dept').value;
+
+      setC = universeStudents.filter(s => {
+        let pass = true;
+        if (typeC === 'scholarship') pass = s.scholarship;
+        if (typeC === 'org') pass = s.org;
+        if (typeC === 'ontime') pass = s.onTime;
+
+        if (deptC !== 'all') pass = pass && s.dept === deptC;
+        return pass;
+      });
+
+      // Update UI Cardinality & Lists
+      document.getElementById('stat-a').innerText = setA.length;
+      document.getElementById('stat-b').innerText = setB.length;
+      document.getElementById('stat-c').innerText = setC.length;
+
+      document.getElementById('cardinality-a').innerText = `|A| = ${setA.length}`;
+      document.getElementById('cardinality-b').innerText = `|B| = ${setB.length}`;
+      document.getElementById('cardinality-c').innerText = `|C| = ${setC.length}`;
+
+      renderSetMemberList('list-set-a', setA, 'indigo');
+      renderSetMemberList('list-set-b', setB, 'fuchsia');
+      renderSetMemberList('list-set-c', setC, 'amber');
+
+      runCurrentOperation();
+    }
+
+    function renderSetMemberList(elementId, setArray, color) {
+      const container = document.getElementById(elementId);
+      container.innerHTML = '';
+
+      if (setArray.length === 0) {
+        container.innerHTML = `<div class="text-[11px] text-slate-400 italic py-2">Himpunan Kosong (∅)</div>`;
+        return;
+      }
+
+      setArray.forEach(s => {
+        container.innerHTML += `
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/60 flex justify-between items-center text-xs">
+            <div>
+              <span class="font-bold text-slate-800 block">${s.name}</span>
+              <span class="text-[10px] text-slate-400 font-mono">${s.nim} • IPK ${s.gpa.toFixed(2)}</span>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-${color}-500"></span>
+          </div>
+        `;
+      });
+    }
+
+    /* ==========================================================================
+       5. OPERASI HIMPUNAN & DIAGRAM VENN LOGIC
+       ========================================================================== */
+    function selectOperation(opKey) {
+      currentOperation = opKey;
+      runCurrentOperation();
+    }
+
+    function runCurrentOperation() {
+      let resultSet = [];
+      let label = "";
+      let description = "";
+
+      const setAIds = new Set(setA.map(s => s.nim));
+      const setBIds = new Set(setB.map(s => s.nim));
+      const setCIds = new Set(setC.map(s => s.nim));
+
+      switch (currentOperation) {
+        case 'A_INTERSECT_B':
+          label = "Irisan (A ∩ B)";
+          description = "Elemen yang menjadi anggota Himpunan A sekaligus Himpunan B.";
+          resultSet = setA.filter(s => setBIds.has(s.nim));
+          break;
+
+        case 'A_UNION_B':
+          label = "Gabungan (A ∪ B)";
+          description = "Elemen yang menjadi anggota Himpunan A, Himpunan B, atau keduanya.";
+          const unionMap = new Map();
+          [...setA, ...setB].forEach(s => unionMap.set(s.nim, s));
+          resultSet = Array.from(unionMap.values());
+          break;
+
+        case 'A_DIFF_B':
+          label = "Selisih (A \\ B)";
+          description = "Elemen yang termasuk Himpunan A tetapi BUKAN anggota Himpunan B.";
+          resultSet = setA.filter(s => !setBIds.has(s.nim));
+          break;
+
+        case 'B_DIFF_A':
+          label = "Selisih (B \\ A)";
+          description = "Elemen yang termasuk Himpunan B tetapi BUKAN anggota Himpunan A.";
+          resultSet = setB.filter(s => !setAIds.has(s.nim));
+          break;
+
+        case 'A_SYM_DIFF_B':
+          label = "Beda Setara (A ⊕ B)";
+          description = "Elemen yang hanya menjadi anggota A saja atau B saja, tetapi tidak keduanya.";
+          const onlyA = setA.filter(s => !setBIds.has(s.nim));
+          const onlyB = setB.filter(s => !setAIds.has(s.nim));
+          resultSet = [...onlyA, ...onlyB];
+          break;
+
+        case 'A_COMPLEMENT':
+          label = "Komplemen (A')";
+          description = "Elemen dalam Semesta (U) yang tidak termasuk dalam Himpunan A.";
+          resultSet = universeStudents.filter(s => !setAIds.has(s.nim));
+          break;
+      }
+
+      renderResult(label, description, resultSet);
+      updateVennCounts();
+    }
+
+    function renderResult(label, description, resultSet) {
+      document.getElementById('active-op-label').innerText = label;
+      document.getElementById('res-description').innerText = description;
+      document.getElementById('res-cardinality').innerText = `Kardinalitas: ${resultSet.length}`;
+
+      const resList = document.getElementById('res-list');
+      resList.innerHTML = '';
+
+      if (resultSet.length === 0) {
+        resList.innerHTML = `
+          <div class="text-center py-6 text-slate-400 text-xs">
+            Hasil Himpunan Kosong (∅)
+          </div>
+        `;
+        return;
+      }
+
+      resultSet.forEach(s => {
+        resList.innerHTML += `
+          <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
+            <div>
+              <p class="font-bold text-slate-800">${s.name}</p>
+              <p class="text-[10px] text-slate-500 font-mono">${s.nim} | ${s.dept} | IPK ${s.gpa.toFixed(2)}</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 font-mono font-bold text-[10px]">Memenuhi</span>
+          </div>
+        `;
+      });
+    }
+
+    /* Evaluator Ekspresi Kustom Sederhana */
+    function evaluateCustomExpr() {
+      const expr = document.getElementById('custom-exp-input').value.trim();
+      if (!expr) return;
+
+      const setAIds = new Set(setA.map(s => s.nim));
+      const setBIds = new Set(setB.map(s => s.nim));
+      const setCIds = new Set(setC.map(s => s.nim));
+      const allIds = universeStudents.map(s => s.nim);
+
+      try {
+        let resIds = [];
+        if (expr.includes('(A ∩ B) \\ C') || expr.includes('(A n B) \\ C')) {
+          resIds = allIds.filter(id => setAIds.has(id) && setBIds.has(id) && !setCIds.has(id));
+        } else if (expr.includes('(A ∪ B) \\ C') || expr.includes('(A u B) \\ C')) {
+          resIds = allIds.filter(id => (setAIds.has(id) || setBIds.has(id)) && !setCIds.has(id));
+        } else if (expr.includes('(A ∩ B ∩ C)') || expr.includes('(A n B n C)')) {
+          resIds = allIds.filter(id => setAIds.has(id) && setBIds.has(id) && setCIds.has(id));
+        } else {
+          resIds = allIds.filter(id => setAIds.has(id) && setBIds.has(id));
+        }
+
+        const resultSet = universeStudents.filter(s => resIds.includes(s.nim));
+        renderResult(`Ekspresi: ${expr}`, `Hasil evaluasi ekspresi himpunan kustom.`, resultSet);
+        showToast('Ekspresi berhasil dievaluasi.');
+      } catch (err) {
+        showToast('Format ekspresi tidak valid!', false);
+      }
+    }
+
+    function updateVennCounts() {
+      const setAIds = new Set(setA.map(s => s.nim));
+      const setBIds = new Set(setB.map(s => s.nim));
+      const setCIds = new Set(setC.map(s => s.nim));
+
+      const countAB = universeStudents.filter(s => setAIds.has(s.nim) && setBIds.has(s.nim) && !setCIds.has(s.nim)).length;
+      const countAC = universeStudents.filter(s => setAIds.has(s.nim) && setCIds.has(s.nim) && !setBIds.has(s.nim)).length;
+      const countBC = universeStudents.filter(s => setBIds.has(s.nim) && setCIds.has(s.nim) && !setAIds.has(s.nim)).length;
+      const countABC = universeStudents.filter(s => setAIds.has(s.nim) && setBIds.has(s.nim) && setCIds.has(s.nim)).length;
+
+      document.getElementById('venn-count-a-b').textContent = `A∩B: ${countAB}`;
+      document.getElementById('venn-count-a-c').textContent = `A∩C: ${countAC}`;
+      document.getElementById('venn-count-b-c').textContent = `B∩C: ${countBC}`;
+      document.getElementById('venn-count-a-b-c').textContent = `A∩B∩C: ${countABC}`;
+    }
+
+    /* ==========================================================================
+       6. HUKUM & TEOREMA MATEMATIKA DISKRIT
+       ========================================================================== */
+    function updateTheoryProofs() {
+      const cardA = setA.length;
+      const cardB = setB.length;
+      const setBIds = new Set(setB.map(s => s.nim));
+      const interAB = setA.filter(s => setBIds.has(s.nim)).length;
+
+      const unionCalculated = cardA + cardB - interAB;
+
+      const unionMap = new Map();
+      [...setA, ...setB].forEach(s => unionMap.set(s.nim, s));
+      const unionActual = unionMap.size;
+
+      document.getElementById('pie-card-a').innerText = cardA;
+      document.getElementById('pie-card-b').innerText = cardB;
+      document.getElementById('pie-card-inter').innerText = interAB;
+      document.getElementById('pie-calc-res').innerText = unionCalculated;
+      document.getElementById('pie-actual-res').innerText = unionActual;
+
+      const unionIds = new Set(Array.from(unionMap.keys()));
+      const leftDeMorgan = universeStudents.filter(s => !unionIds.has(s.nim)).length;
+
+      const setAIds = new Set(setA.map(s => s.nim));
+      const rightDeMorgan = universeStudents.filter(s => !setAIds.has(s.nim) && !setBIds.has(s.nim)).length;
+
+      document.getElementById('demorgan-left').innerText = leftDeMorgan;
+      document.getElementById('demorgan-right').innerText = rightDeMorgan;
+
+      const isValid = leftDeMorgan === rightDeMorgan;
+      const badge = document.getElementById('demorgan-status');
+      badge.innerText = isValid ? "Terbukti Sama" : "Tidak Valid";
+      badge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${isValid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`;
+    }
+
+    /* ==========================================================================
+       7. ANGGOTA KELOMPOK & PARTISIPASI LOGIC (6 ANGGOTA)
+       ========================================================================== */
+    function getStatusByScore(score) {
+      if (score >= 90) return { text: 'Sangat Aktif', bg: 'bg-emerald-100', textCol: 'text-emerald-800', barCol: 'bg-emerald-500' };
+      if (score >= 75) return { text: 'Aktif', bg: 'bg-blue-100', textCol: 'text-blue-800', barCol: 'bg-indigo-500' };
+      return { text: 'Cukup Aktif', bg: 'bg-amber-100', textCol: 'text-amber-800', barCol: 'bg-amber-500' };
+    }
+
+    function renderTeamSection() {
+      const cardsContainer = document.getElementById('team-cards-container');
+      const tableBody = document.getElementById('team-table-body');
+      
+      cardsContainer.innerHTML = '';
+      tableBody.innerHTML = '';
+
+      let totalScore = 0;
+
+      teamMembers.forEach((m, idx) => {
+        totalScore += m.score;
+        const statusInfo = getStatusByScore(m.score);
+
+        // Render Card Member
+        cardsContainer.innerHTML += `
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition">
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <span class="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
+                  ${m.nim}
+                </span>
+                <span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${statusInfo.bg} ${statusInfo.textCol}">
+                  ${statusInfo.text}
+                </span>
+              </div>
+
+              <h3 class="font-bold text-base text-slate-800">${m.name}</h3>
+              <p class="text-xs font-medium text-indigo-600 mb-3">${m.role}</p>
+
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                  <span class="font-bold text-slate-700">Tugas: </span>
+                  ${m.task}
+                </p>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-medium text-slate-500">Skor Partisipasi</span>
+                <span class="font-mono font-bold text-sm text-slate-800">${m.score}%</span>
+              </div>
+
+              <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+                <div class="h-full transition-all duration-300 ${statusInfo.barCol}" style="width: ${m.score}%"></div>
+              </div>
+
+              <div class="flex items-center space-x-2">
+                <button onclick="updateMemberScore(${m.id}, -5)" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition flex items-center justify-center space-x-1">
+                  <span class="material-symbols-outlined text-xs">remove</span>
+                  <span>5%</span>
+                </button>
+                <button onclick="updateMemberScore(${m.id}, 5)" class="flex-1 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition flex items-center justify-center space-x-1">
+                  <span class="material-symbols-outlined text-xs">add</span>
+                  <span>5%</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Render Table Row
+        tableBody.innerHTML += `
+          <tr class="hover:bg-slate-50/50">
+            <td class="py-3 px-4 font-mono font-medium text-slate-400">${idx + 1}</td>
+            <td class="py-3 px-4 font-mono font-bold text-indigo-600">${m.nim}</td>
+            <td class="py-3 px-4 font-semibold text-slate-800">${m.name}</td>
+            <td class="py-3 px-4 text-slate-600">${m.role}</td>
+            <td class="py-3 px-4 text-center font-mono font-bold text-slate-800">${m.score}%</td>
+            <td class="py-3 px-4 text-center">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${statusInfo.bg} ${statusInfo.textCol}">
+                ${statusInfo.text}
+              </span>
+            </td>
+          </tr>
+        `;
+      });
+
+      const avg = (totalScore / teamMembers.length).toFixed(1);
+      document.getElementById('team-avg-score').innerHTML = `${avg} <span class="text-xs font-normal text-indigo-300">/ 100</span>`;
+    }
+
+    function updateMemberScore(id, delta) {
+      teamMembers = teamMembers.map(m => {
+        if (m.id === id) {
+          const newScore = Math.min(100, Math.max(0, m.score + delta));
+          return { ...m, score: newScore };
+        }
+        return m;
+      });
+
+      renderTeamSection();
+      showToast('Skor partisipasi anggota diperbarui.');
+    }
+
+    /* ==========================================================================
+       8. EXPORT DATA TO CSV
+       ========================================================================== */
+    function exportDataCSV() {
+      if (universeStudents.length === 0) {
+        showToast('Tidak ada data untuk diekspor!', false);
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "NIM,Nama,Jurusan,IPK,Penerima Beasiswa,Aktif Organisasi,Lulus Tepat Waktu\n";
+
+      universeStudents.forEach(s => {
+        csvContent += `"${s.nim}","${s.name}","${s.dept}",${s.gpa},${s.scholarship ? 'Ya' : 'Tidak'},${s.org ? 'Ya' : 'Tidak'},${s.onTime ? 'Ya' : 'Tidak'}\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `SetClassify_Data_Mahasiswa_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('Data CSV berhasil diunduh.');
+    }
+  </script>
+</body>
+</html>
